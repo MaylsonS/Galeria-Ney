@@ -16,8 +16,8 @@ import java.util.UUID;
 
 public class Obra {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotBlank(message = "O título é obrigatório")
     private String titulo;
@@ -29,8 +29,12 @@ public class Obra {
     @Enumerated(EnumType.STRING)
     private TipoObra tipo;
 
-    @NotBlank(message = "O link/arquivo é obrigatório")
     private String urlMidia;
 
     private LocalDate dataPostagem;
+
+    @PrePersist
+    public void prePersist() {
+        if(this.dataPostagem == null) this.dataPostagem = LocalDate.now();
+    }
 }
