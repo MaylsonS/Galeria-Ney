@@ -4,9 +4,10 @@ import com.pessoal.galeria_ney.domain.Obra;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface ObraRepository extends JpaRepository<Obra, UUID> {
-
+    List<Obra> findByTituloContainingIgnoreCase(String termo);
 }

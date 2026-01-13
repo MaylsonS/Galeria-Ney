@@ -6,6 +6,9 @@ import com.pessoal.galeria_ney.infra.exception.RegraDeNegocioException;
 import com.pessoal.galeria_ney.repository.ObraRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 public class ObraService {
 
@@ -15,13 +18,46 @@ public class ObraService {
         this.repository = repository;
     }
 
+    public List<Obra> listar(String termo){
+        if(termo==null || termo.isEmpty()){
+            return  repository.findAll();
+        }
+        return repository.findByTituloContainingIgnoreCase(termo);
+    }
+
     public Obra cadastrar(Obra obra) {
+        validarUrlMidia(obra);
+        return repository.save(obra);
+    }
+
+    public Obra buscarPorId(UUID id) {
+        return  repository.findById(id).orElseThrow(()-> new RegraDeNegocioException("id","Obra não encontrada"));
+    }
+
+    public Obra atualizar(UUID id,Obra obraAlterada) {
+
+        Obra obraAntiga = buscarPorId(id);
+
+        obraAntiga.setTitulo(obraAlterada.getTitulo());
+        obraAntiga.setDescricao(obraAlterada.getDescricao());
+        obraAntiga.setTipo(obraAlterada.getTipo());
+        obraAntiga.setUrlMidia(obraAlterada.getUrlMidia());
+
+        validarUrlMidia(obraAntiga);
+
+        return repository.save(obraAntiga);
+    }
+
+    public void excluir(UUID id) {
+        Obra obraEncontrada = buscarPorId(id);
+        repository.delete(obraEncontrada);
+    }
+
+    public void validarUrlMidia(Obra obra) {
         if (obra.getTipo() != TipoObra.IMAGEM) {
             if (obra.getUrlMidia() == null || obra.getUrlMidia().isBlank()) {
-                throw new RegraDeNegocioException("urlMidia", "Para vídeos ou músicas, o link é obrigatório!");
+                throw new RegraDeNegocioException("UrlMidia", "Para videos e Musicas é preciso colcoar o link !");
             }
         }
-
-        return repository.save(obra);
     }
 }
