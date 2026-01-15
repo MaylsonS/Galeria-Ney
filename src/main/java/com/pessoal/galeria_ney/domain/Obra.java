@@ -19,14 +19,15 @@ public class Obra {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank(message = "O título é obrigatório")
+    @Column(nullable = false)
     private String titulo;
 
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
-    @NotNull(message = "O tipo é obrigatório")
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TipoObra tipo;
 
     private String urlMidia;

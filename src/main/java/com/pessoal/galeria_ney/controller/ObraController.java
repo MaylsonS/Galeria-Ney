@@ -2,6 +2,8 @@ package com.pessoal.galeria_ney.controller;
 
 
 import com.pessoal.galeria_ney.domain.Obra;
+import com.pessoal.galeria_ney.dto.ObraRequestDTO;
+import com.pessoal.galeria_ney.dto.ObraResponseDTO;
 import com.pessoal.galeria_ney.repository.ObraRepository;
 import com.pessoal.galeria_ney.service.ObraService;
 import jakarta.validation.Valid;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,22 +28,31 @@ public class ObraController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Obra>> listar(@RequestParam(required = false) String termo) {
+    public ResponseEntity<List<ObraResponseDTO>> listar(@RequestParam(required = false) String termo) {
         List<Obra> obras = service.listar(termo);
-        return ResponseEntity.ok(obras);
+
+        List<ObraResponseDTO> resposta = obras.stream()
+                .map(ObraResponseDTO::new)
+                .toList();
+
+        return ResponseEntity.ok(resposta);
     }
 
     @PostMapping
-    public ResponseEntity<Obra> salvar(@Valid @RequestBody Obra obra) {
-        Obra obraSalva = service.cadastrar(obra);
+    public ResponseEntity<ObraResponseDTO> salvar(@Valid @RequestBody ObraRequestDTO dados) {
+        Obra obraParaSalvar = dados.toEntity();
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(obraSalva);
+        Obra obraSalva = service.cadastrar(obraParaSalvar);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ObraResponseDTO(obraSalva));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Obra> atualizarObra(@PathVariable UUID id,  @Valid @RequestBody Obra obra) {
-        Obra obraAtualizado = service.atualizar(id, obra);
-        return ResponseEntity.ok(obraAtualizado);
+    public ResponseEntity<ObraResponseDTO> atualizarObra(@PathVariable UUID id,  @Valid @RequestBody ObraRequestDTO dados) {
+        Obra obraAtualizado = service.atualizar(id, dados.toEntity());
+
+        return ResponseEntity.ok(new ObraResponseDTO(obraAtualizado));
     }
 
     @DeleteMapping("/{id}")
