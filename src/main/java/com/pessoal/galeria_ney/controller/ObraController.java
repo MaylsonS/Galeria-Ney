@@ -19,12 +19,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/obras")
 public class ObraController {
-    private final ObraRepository repository;
+
     private final ObraService service;
 
-    public ObraController(ObraRepository repository, ObraService service) {
+    public ObraController(ObraService service) {
         this.service = service;
-        this.repository = repository;
     }
 
     @GetMapping

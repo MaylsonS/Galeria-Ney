@@ -37,12 +37,11 @@ public class Usuario implements UserDetails {
     public Usuario(String login, String senha, UserRole role) {
         this.login = login;
         this.senha = senha;
-        this.role = role;
+        this.role = (role == null) ? UserRole.USER : role;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
         if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
         else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
