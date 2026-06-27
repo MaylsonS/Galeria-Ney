@@ -12,6 +12,7 @@ import org.hibernate.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,6 +42,7 @@ public class ObraController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ObraResponseDTO> salvar(@Valid @RequestBody ObraRequestDTO dados) {
         Obra obraParaSalvar = dados.toEntity();
 
@@ -51,6 +53,7 @@ public class ObraController {
     }
 
     @PostMapping(value = "/imagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ObraResponseDTO> salvarImagem(
             @RequestParam("titulo") String titulo,
             @RequestParam(value = "descricao", required = false) String descricao,
@@ -67,6 +70,7 @@ public class ObraController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ObraResponseDTO> atualizarObra(@PathVariable UUID id,  @Valid @RequestBody ObraRequestDTO dados) {
         Obra obraAtualizado = service.atualizar(id, dados.toEntity());
 
@@ -74,6 +78,7 @@ public class ObraController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Obra> excluir(@PathVariable UUID id) {
         service.excluir(id);
         return ResponseEntity.noContent().build();
