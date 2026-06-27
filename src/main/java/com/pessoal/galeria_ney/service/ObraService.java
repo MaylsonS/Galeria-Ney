@@ -3,8 +3,11 @@ package com.pessoal.galeria_ney.service;
 import com.pessoal.galeria_ney.domain.Obra;
 import com.pessoal.galeria_ney.domain.TipoObra;
 import com.pessoal.galeria_ney.infra.exception.RegraDeNegocioException;
+import com.pessoal.galeria_ney.infra.utils.EmbedUrlResolver;
 import com.pessoal.galeria_ney.repository.ObraRepository;
+import com.pessoal.galeria_ney.service.storage.MidiaStorageService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,10 +16,12 @@ import java.util.UUID;
 public class ObraService {
 
     private final ObraRepository repository;
-
-    public ObraService(ObraRepository repository) {
+    private final MidiaStorageService storageService;
+    public ObraService(ObraRepository repository,  MidiaStorageService storageService) {
         this.repository = repository;
+        this.storageService = storageService;
     }
+
 
     public List<Obra> listar(String termo){
         if(termo==null || termo.isEmpty()){
@@ -27,6 +32,18 @@ public class ObraService {
 
     public Obra cadastrar(Obra obra) {
         validarUrlMidia(obra);
+        return repository.save(obra);
+    }
+
+    public Obra cadatrarImagem(MultipartFile arquivo, Obra obra) {
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new RegraDeNegocioException("arquivo", "O arquivo da imagem é obrigatório.");
+        }
+
+        String urlImagem = storageService.upload(arquivo);
+        obra.setUrlMidia(urlImagem);
+        obra.setTipo(TipoObra.IMAGEM);
+
         return repository.save(obra);
     }
 
@@ -58,6 +75,8 @@ public class ObraService {
             if (obra.getUrlMidia() == null || obra.getUrlMidia().isBlank()) {
                 throw new RegraDeNegocioException("UrlMidia", "Para videos e Musicas é preciso colcoar o link !");
             }
+
+            EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo());
         }
     }
 }

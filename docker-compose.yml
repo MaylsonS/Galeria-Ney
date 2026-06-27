@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # Nosso Banco de Dados
+  db:
+    image: postgres:15-alpine
+    container_name: galeria-postgres
+    environment:
+      POSTGRES_DB: galeria_db
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nossa API Spring Boot
+  api:
+    build: .
+    container_name: galeria-api
+    ports:
+      - "3000:3000"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/galeria_db
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-admin}
+      JWT_SECRET: ${JWT_SECRET:-senhajwt}
+      CLOUDINARY_URL: ${CLOUDINARY_URL} # Puxa do .env e joga para o Spring
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data: # Define a persistência de dados

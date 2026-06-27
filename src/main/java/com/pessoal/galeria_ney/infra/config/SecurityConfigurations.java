@@ -30,19 +30,11 @@ public class SecurityConfigurations {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/obras").permitAll() // Galeria pública
-
-                        // Rotas Privadas (Só Admin)
-                        .requestMatchers(HttpMethod.POST, "/obras").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/obras/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/obras/**").hasRole("ADMIN")
-
-                        .anyRequest().authenticated()
+                        // Liberamos TODAS as rotas da aplicação
+                        .anyRequest().permitAll()
                 )
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                // COMENTAMOS O FILTRO: Assim o Spring ignora completamente o JWT por enquanto
+                // .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

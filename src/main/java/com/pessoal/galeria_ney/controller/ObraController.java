@@ -2,6 +2,7 @@ package com.pessoal.galeria_ney.controller;
 
 
 import com.pessoal.galeria_ney.domain.Obra;
+import com.pessoal.galeria_ney.domain.TipoObra;
 import com.pessoal.galeria_ney.dto.ObraRequestDTO;
 import com.pessoal.galeria_ney.dto.ObraResponseDTO;
 import com.pessoal.galeria_ney.repository.ObraRepository;
@@ -9,8 +10,10 @@ import com.pessoal.galeria_ney.service.ObraService;
 import jakarta.validation.Valid;
 import org.hibernate.annotations.Parameter;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +47,22 @@ public class ObraController {
         Obra obraSalva = service.cadastrar(obraParaSalvar);
 
 
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ObraResponseDTO(obraSalva));
+    }
+
+    @PostMapping(value = "/imagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ObraResponseDTO> salvarImagem(
+            @RequestParam("titulo") String titulo,
+            @RequestParam(value = "descricao", required = false) String descricao,
+            @RequestPart("arquivo") MultipartFile arquivo) {
+
+        Obra obra = Obra.builder()
+                .titulo(titulo)
+                .descricao(descricao)
+                .tipo(TipoObra.IMAGEM)
+                .build();
+
+        Obra obraSalva = service.cadatrarImagem(arquivo,obra);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ObraResponseDTO(obraSalva));
     }
 
