@@ -17,13 +17,14 @@ public class EmbedUrlResolver {
     }
 
     private static String resolveYouTube(String url) {
-        String pattern = "(?<=watch\\?v=|/videos/|embed\\/|youtu.be\\/|\\/v\\/|\\/e\\/|watch\\?v%3D|watch\\?feature=player_embedded&v=|%2Fvideos%2F|embed%\u200C\u200B2F|youtu.be%2F|%2Fv%2F)[^#\\&\\?\\n]*";
+        String pattern = "(?:v=|youtu\\.be/|/shorts/)([^&\\n?#]+)";
         Pattern compiledPattern = Pattern.compile(pattern);
         Matcher matcher = compiledPattern.matcher(url);
+
         if (matcher.find()) {
-            return "https://www.youtube.com/embed/" + matcher.group();
+            return "https://www.youtube.com/embed/" + matcher.group(1);
         }
-        throw new RegraDeNegocioException("urlMidia", "URL do YouTube em formato inválido.");
+        throw new RegraDeNegocioException("urlMidia", "URL do YouTube em formato inválido. Use links padrão, youtu.be ou shorts.");
     }
 
     private static String resolveSpotify(String url) {

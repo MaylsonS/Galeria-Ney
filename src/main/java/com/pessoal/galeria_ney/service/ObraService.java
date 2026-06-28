@@ -35,9 +35,13 @@ public class ObraService {
         return repository.save(obra);
     }
 
-    public Obra cadatrarImagem(MultipartFile arquivo, Obra obra) {
+    public Obra cadastrarImagem(MultipartFile arquivo, Obra obra) {
         if (arquivo == null || arquivo.isEmpty()) {
             throw new RegraDeNegocioException("arquivo", "O arquivo da imagem é obrigatório.");
+        }
+        //Valida se o arquivo é uma imagem
+        if (arquivo.getContentType() == null || !arquivo.getContentType().startsWith("image/")) {
+            throw new RegraDeNegocioException("arquivo", "O arquivo enviado não é uma imagem válida (PDFs ou executáveis não são permitidos).");
         }
 
         String urlImagem = storageService.upload(arquivo);

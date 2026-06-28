@@ -7,7 +7,8 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.1</version>
-        <relativePath/> </parent>
+        <relativePath/>
+    </parent>
 
     <groupId>com.pessoal</groupId>
     <artifactId>galeria-ney</artifactId>
@@ -17,7 +18,8 @@
 
     <properties>
         <java.version>21</java.version>
-        <lombok.version>1.18.38</lombok.version> </properties>
+        <lombok.version>1.18.38</lombok.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -83,11 +85,11 @@
             <artifactId>cloudinary-http44</artifactId>
             <version>1.36.0</version>
         </dependency>
-
     </dependencies>
 
     <build>
         <plugins>
+            <!-- 1. Plugin do Spring Boot -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -100,6 +102,8 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- 2. Plugin do Compilador -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -114,6 +118,21 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+
+            <!-- 3. Plugin Failsafe para Testes de Integração -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

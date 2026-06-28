@@ -41,7 +41,7 @@ class ObraServiceTest {
         when(repository.save(any(Obra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act: Executar a ação
-        Obra obraSalva = obraService.cadatrarImagem(arquivoFalso,obraInicial);
+        Obra obraSalva = obraService.cadastrarImagem(arquivoFalso,obraInicial);
 
         // Assert: Verificar os resultados
         assertNotNull(obraSalva);
@@ -61,7 +61,7 @@ class ObraServiceTest {
 
         // Act & Assert
         assertThrows(RegraDeNegocioException.class, () -> {
-            obraService.cadatrarImagem(arquivoFalsoVazio, obraInicial);
+            obraService.cadastrarImagem(arquivoFalsoVazio, obraInicial);
         });
 
         // Garante que se o arquivo for vazio, ele JAMAIS chama o upload ou o banco
