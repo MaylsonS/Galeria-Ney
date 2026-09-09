@@ -14,7 +14,9 @@ public record ObraResponseDTO (
         TipoObra tipo,
         String urlMidia,
         String urlEmbed,
-        LocalDate dataPostagem
+        LocalDate dataPostagem,
+        UUID autorId,
+        String autorLogin
 ){
     public ObraResponseDTO(Obra obra) {
         this(
@@ -24,7 +26,9 @@ public record ObraResponseDTO (
                 obra.getTipo(),
                 obra.getUrlMidia(),
                 EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo()),
-                obra.getDataPostagem()
+                obra.getDataPostagem(),
+                obra.getAutor() != null ? obra.getAutor().getId() : null,
+                obra.getAutor() != null ? obra.getAutor().getLogin() : null
         );
     }
 }

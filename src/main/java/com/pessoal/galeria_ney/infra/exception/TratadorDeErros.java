@@ -4,6 +4,7 @@ package com.pessoal.galeria_ney.infra.exception;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -31,6 +32,12 @@ public class TratadorDeErros {
         public DadosErroValidacao(FieldError erro) {
             this(erro.getField(), erro.getDefaultMessage());
         }
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<List<DadosErroValidacao>> tratarErroParametroAusente(MissingServletRequestParameterException ex) {
+        var erro = new DadosErroValidacao(ex.getParameterName(), "Este campo é obrigatório no envio do formulário.");
+        return ResponseEntity.badRequest().body(List.of(erro));
     }
 
 

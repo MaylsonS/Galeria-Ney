@@ -5,6 +5,9 @@ import com.pessoal.galeria_ney.domain.TipoObra;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+import java.util.UUID;
+
 public record ObraRequestDTO(
         @NotBlank(message = "O titulo é obrigatorio")
         String titulo,
@@ -14,7 +17,10 @@ public record ObraRequestDTO(
         @NotNull(message = "O tipo é obrigatório")
         TipoObra tipo,
 
-        String urlMidia
+        String urlMidia,
+
+        List<UUID> coautoresIds
+
 ) {
     public Obra toEntity() {
         return Obra.builder()

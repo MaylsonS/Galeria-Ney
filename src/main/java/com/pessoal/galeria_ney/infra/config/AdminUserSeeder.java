@@ -31,9 +31,9 @@ public class AdminUserSeeder implements CommandLineRunner {
 
             repository.save(admin);
 
-            System.out.println("✅ Seeder executado: Usuário ADMIN criado com sucesso!");
+            System.out.println("executado: Usuário ADMIN criado com sucesso!");
         } else {
-            System.out.println("⚡ Seeder: Usuário ADMIN já existe no banco de dados.");
+            System.out.println("Usuário ADMIN já existe no banco de dados.");
         }
     }
 }

@@ -30,6 +30,12 @@ public class ObraService {
         return (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    private void validarDadosBasicos(Obra obra) {
+        if (obra.getTitulo() == null || obra.getTitulo().trim().isEmpty()) {
+            throw new RegraDeNegocioException("titulo", "O titulo é obrigatorio");
+        }
+    }
+
     private void verificarPermissao(Obra obra) {
         Usuario usuarioLogado = getUsuarioLogado();
 
@@ -54,6 +60,7 @@ public class ObraService {
     }
 
     public Obra cadastrar(Obra obra) {
+        validarDadosBasicos(obra);
         validarUrlMidia(obra);
         obra.setAutor(getUsuarioLogado());
         return repository.save(obra);
@@ -66,6 +73,7 @@ public class ObraService {
         if (arquivo.getContentType() == null || !arquivo.getContentType().startsWith("image/")) {
             throw new RegraDeNegocioException("arquivo", "O arquivo enviado não é uma imagem válida.");
         }
+        validarDadosBasicos(obra);
 
         String urlImagem = storageService.upload(arquivo);
         obra.setUrlMidia(urlImagem);
@@ -82,6 +90,7 @@ public class ObraService {
     public Obra atualizar(UUID id, Obra obraAlterada) {
         Obra obraAntiga = buscarPorId(id);
 
+        validarDadosBasicos(obraAlterada);
         verificarPermissao(obraAntiga);
 
         obraAntiga.setTitulo(obraAlterada.getTitulo());
