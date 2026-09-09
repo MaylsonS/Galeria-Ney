@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface ObraRepository extends JpaRepository<Obra, UUID> {
     List<Obra> findByTituloContainingIgnoreCase(String termo);
+    List<Obra> findByAutorId(UUID autorId);
 }

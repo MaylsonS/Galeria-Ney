@@ -25,7 +25,6 @@ public class Obra {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoObra tipo;
@@ -33,6 +32,10 @@ public class Obra {
     private String urlMidia;
 
     private LocalDate dataPostagem;
+
+    @ManyToOne
+    @JoinColumn(name = "autor_id")
+    private Usuario autor;
 
     @PrePersist
     public void prePersist() {

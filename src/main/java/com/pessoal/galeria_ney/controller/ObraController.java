@@ -1,6 +1,5 @@
 package com.pessoal.galeria_ney.controller;
 
-
 import com.pessoal.galeria_ney.domain.Obra;
 import com.pessoal.galeria_ney.domain.TipoObra;
 import com.pessoal.galeria_ney.dto.ObraRequestDTO;
@@ -30,27 +29,26 @@ public class ObraController {
     @GetMapping
     public ResponseEntity<List<ObraResponseDTO>> listar(@RequestParam(required = false) String termo) {
         List<Obra> obras = service.listar(termo);
+        List<ObraResponseDTO> resposta = obras.stream().map(ObraResponseDTO::new).toList();
+        return ResponseEntity.ok(resposta);
+    }
 
-        List<ObraResponseDTO> resposta = obras.stream()
-                .map(ObraResponseDTO::new)
-                .toList();
-
+    @GetMapping("/autor/{autorId}")
+    public ResponseEntity<List<ObraResponseDTO>> listarPorAutor(@PathVariable UUID autorId) {
+        List<Obra> obras = service.listarPorAutor(autorId);
+        List<ObraResponseDTO> resposta = obras.stream().map(ObraResponseDTO::new).toList();
         return ResponseEntity.ok(resposta);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ObraResponseDTO> salvar(@Valid @RequestBody ObraRequestDTO dados) {
-        Obra obraParaSalvar = dados.toEntity();
-
-        Obra obraSalva = service.cadastrar(obraParaSalvar);
-
-
+        Obra obraSalva = service.cadastrar(dados.toEntity());
         return ResponseEntity.status(HttpStatus.CREATED).body(new ObraResponseDTO(obraSalva));
     }
 
     @PostMapping(value = "/imagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ObraResponseDTO> salvarImagem(
             @RequestParam("titulo") String titulo,
             @RequestParam(value = "descricao", required = false) String descricao,
@@ -62,21 +60,20 @@ public class ObraController {
                 .tipo(TipoObra.IMAGEM)
                 .build();
 
-        Obra obraSalva = service.cadastrarImagem(arquivo,obra);
+        Obra obraSalva = service.cadastrarImagem(arquivo, obra);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ObraResponseDTO(obraSalva));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ObraResponseDTO> atualizarObra(@PathVariable UUID id,  @Valid @RequestBody ObraRequestDTO dados) {
-        Obra obraAtualizado = service.atualizar(id, dados.toEntity());
-
-        return ResponseEntity.ok(new ObraResponseDTO(obraAtualizado));
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<ObraResponseDTO> atualizarObra(@PathVariable UUID id, @Valid @RequestBody ObraRequestDTO dados) {
+        Obra obraAtualizada = service.atualizar(id, dados.toEntity());
+        return ResponseEntity.ok(new ObraResponseDTO(obraAtualizada));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Obra> excluir(@PathVariable UUID id) {
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<Void> excluir(@PathVariable UUID id) {
         service.excluir(id);
         return ResponseEntity.noContent().build();
     }
