@@ -4,12 +4,14 @@ import com.pessoal.galeria_ney.domain.Obra;
 import com.pessoal.galeria_ney.domain.TipoObra;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 import java.util.UUID;
 
 public record ObraRequestDTO(
         @NotBlank(message = "O titulo é obrigatorio")
+        @Size(max = 20, message = "O título deve ter no máximo 20 caracteres")
         String titulo,
 
         String descricao,

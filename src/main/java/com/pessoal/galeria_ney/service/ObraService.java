@@ -34,6 +34,9 @@ public class ObraService {
         if (obra.getTitulo() == null || obra.getTitulo().trim().isEmpty()) {
             throw new RegraDeNegocioException("titulo", "O titulo é obrigatorio");
         }
+        if (obra.getTitulo().length() > 20) {
+            throw new RegraDeNegocioException("titulo", "O título deve ter no máximo 20 caracteres");
+        }
     }
 
     private void verificarPermissao(Obra obra) {
