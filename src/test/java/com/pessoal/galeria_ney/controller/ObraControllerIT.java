@@ -220,5 +220,31 @@ class ObraControllerIT {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("Fluxograma de Integração: Deve interromper fluxo se o Cloudinary (Serviço Externo) falhar")
+    void deveTratarFalhaNaIntegracaoExterna() throws Exception {
+
+        MockMultipartFile arquivoMock = new MockMultipartFile("arquivo", "teste.jpg", "image/jpeg", "dados".getBytes());
+
+       when(storageService.upload(any())).thenThrow(new RuntimeException("Cloudinary fora do ar"));
+
+        var requestBuilder = multipart("/obras/imagem")
+                .file(arquivoMock)
+                .param("titulo", "Obra Integrada");
+
+        // Validação do Fluxo
+        //MockMvc não tem o servidor Tomcat a rodar para transformar isto num status 500,
+        // ele vai atirar a ServletException. Vamos capturá-la e garantir que a causa foi a nossa falha!
+        Exception excecao = org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> {
+            mockMvc.perform(requestBuilder);
+        });
+
+        // Verificamos se a causa raiz da quebra do fluxo foi efetivamente a falha no Cloudinary
+        org.junit.jupiter.api.Assertions.assertTrue(excecao.getCause() instanceof RuntimeException);
+        org.junit.jupiter.api.Assertions.assertEquals("Cloudinary fora do ar", excecao.getCause().getMessage());
+    }
+
+
+
 
 }
