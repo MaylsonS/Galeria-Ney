@@ -117,7 +117,9 @@ public class ObraService {
             if (obra.getUrlMidia() == null || obra.getUrlMidia().isBlank()) {
                 throw new RegraDeNegocioException("UrlMidia", "Para videos e Musicas é preciso colocar o link!");
             }
-            EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo());
+            //EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo());
+            String urlConvertida = EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo());
+            obra.setUrlMidia(urlConvertida);
         }
     }
 }

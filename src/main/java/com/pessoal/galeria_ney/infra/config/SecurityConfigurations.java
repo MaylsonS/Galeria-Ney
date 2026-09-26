@@ -41,8 +41,8 @@ public class SecurityConfigurations {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/obras").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/artistas").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/obras", "/obras/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/artistas", "/artistas/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
