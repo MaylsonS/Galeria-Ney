@@ -5,5 +5,7 @@ import com.pessoal.galeria_ney.domain.UserRole;
 public record RegisterDTO(
         String login,
         String senha,
-        UserRole role
+        UserRole role,
+        String fotoPerfil,
+        String descricao
 ) {}

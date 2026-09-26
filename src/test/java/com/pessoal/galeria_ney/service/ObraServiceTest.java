@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,7 +54,7 @@ class ObraServiceTest {
     }
 
     @Test
-    @DisplayName("Deve cadastrar obra com imagem e retornar a obra salva")
+    @DisplayName("Deve cadastrar obra com imagem e retornar a obra salva com status ativo")
     void cadastrarComImagemCenarioDeSucesso() {
         Obra obraInicial = Obra.builder().titulo("Teste").descricao("Uma arte").build();
         MockMultipartFile arquivoFalso = new MockMultipartFile("arquivo", "teste.png", "image/png", "conteudo".getBytes());
@@ -66,7 +67,7 @@ class ObraServiceTest {
         assertNotNull(obraSalva);
         assertEquals(TipoObra.IMAGEM, obraSalva.getTipo());
         assertEquals("https://cloudinary.com/foto_falsa.jpg", obraSalva.getUrlMidia());
-
+        assertTrue(obraSalva.isAtivo(), "A obra deve ser salva como ativa por defeito");
         assertEquals(usuarioFalso, obraSalva.getAutor());
 
         verify(repository, times(1)).save(any(Obra.class));
@@ -85,7 +86,6 @@ class ObraServiceTest {
         verify(storageService, never()).upload(any());
         verify(repository, never()).save(any());
     }
-
 
     // Tecnica Valor limite
 
@@ -123,11 +123,9 @@ class ObraServiceTest {
         verify(repository, never()).save(any());
     }
 
-
     @Test
     @DisplayName("Deve falhar ao cadastrar imagem com arquivo de 0 bytes (Limite Inferior Arquivo)")
     void cadastrarImagemArquivoLimiteInferiorInvalido() {
-
         Obra obra = Obra.builder().titulo("Arte").build();
         MockMultipartFile arquivo0Bytes = new MockMultipartFile("arquivo", "arte.jpg", "image/jpeg", new byte[0]);
 
@@ -142,7 +140,6 @@ class ObraServiceTest {
     @Test
     @DisplayName("Deve cadastrar imagem com arquivo de exato 1 byte (Limite Inferior Arquivo Valido)")
     void cadastrarImagemArquivoLimiteInferiorValido() {
-
         Obra obra = Obra.builder().titulo("Arte").build();
         MockMultipartFile arquivo1Byte = new MockMultipartFile("arquivo", "arte.jpg", "image/jpeg", new byte[1]);
 
@@ -155,7 +152,6 @@ class ObraServiceTest {
         assertEquals("https://cloudinary.com/1byte.jpg", obraSalva.getUrlMidia());
         verify(storageService, times(1)).upload(arquivo1Byte);
     }
-
 
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.CsvSource({
@@ -183,23 +179,31 @@ class ObraServiceTest {
         autorDaObra.setId(idDonoDaObra);
 
         UUID idObra = UUID.randomUUID();
-        Obra obra = Obra.builder().autor(autorDaObra).build();
+        // A obra necessita obrigatoriamente de estar ativa para passar no `buscarPorId` antes das regras de permissão
+        Obra obra = Obra.builder()
+                .autor(autorDaObra)
+                .ativo(true)
+                .build();
 
-        when(repository.findById(idObra)).thenReturn(java.util.Optional.of(obra));
+        when(repository.findById(idObra)).thenReturn(Optional.of(obra));
 
         if (esperaExcecao) {
             RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class, () -> {
                 obraService.excluir(idObra);
             });
             assertEquals("Acesso Negado: Você só pode editar ou excluir as suas próprias obras.", ex.getMessage());
+
+            // Garante que o estado ativo não foi modificado em caso de falha de permissão
+            assertTrue(obra.isAtivo());
+            verify(repository, never()).save(any());
         } else {
             assertDoesNotThrow(() -> {
                 obraService.excluir(idObra);
             });
+
+            // Garante o comportamento do "Soft Delete": O registo não é apagado fisicamente, apenas desativado.
+            assertFalse(obra.isAtivo(), "A flag ativo deve ser alterada para false.");
+            verify(repository, times(1)).save(obra);
         }
     }
-
-
-
-
 }

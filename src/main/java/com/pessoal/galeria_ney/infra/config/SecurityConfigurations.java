@@ -34,11 +34,15 @@ public class SecurityConfigurations {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                // 1. Ativa a configuração de CORS definida no Bean abaixo
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        // 1. Libera o CORS Preflight Global
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // 2. Libera a rota de erro nativa do Spring (ESSENCIAL para não mascarar erros com 403)
+                        .requestMatchers("/error").permitAll()
+                        // 3. Demais rotas públicas
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/obras", "/obras/**").permitAll()
@@ -59,7 +63,6 @@ public class SecurityConfigurations {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. Define as regras de CORS (Permite que o React na porta 5173 acesse a API)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

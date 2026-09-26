@@ -1,9 +1,11 @@
 package com.pessoal.galeria_ney.controller;
 
+import com.pessoal.galeria_ney.domain.TipoObra;
 import com.pessoal.galeria_ney.domain.UserRole;
 import com.pessoal.galeria_ney.domain.Usuario;
 import com.pessoal.galeria_ney.repository.ObraRepository;
 import com.pessoal.galeria_ney.service.storage.MidiaStorageService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,14 +24,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -52,12 +55,12 @@ class ObraControllerIT {
         Usuario usuarioMock = new Usuario();
         usuarioMock.setId(UUID.randomUUID());
         usuarioMock.setRole(UserRole.USER);
+        usuarioMock.setLogin("test@user.com"); // Previne NullPointer na autorização
 
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(usuarioMock, null, usuarioMock.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
-
 
     @Test
     @DisplayName("Sucesso 1: Deve criar obra com arquivo e título nos limites mínimos (1 byte / 1 char)")
@@ -75,10 +78,13 @@ class ObraControllerIT {
     }
 
     @Test
-    @DisplayName("Sucesso 2: Deve retornar 200 OK acionando repository.findAll() quando termo for vazio (tamanho 0)")
+    @DisplayName("Sucesso 2: Deve retornar 200 OK acionando paginação quando termo for vazio")
     void deveRetornar200_Sucesso2_BuscaNoLimiteVazio() throws Exception {
+        // Agora simula o comportamento paginado
         mockMvc.perform(get("/obras")
-                        .param("termo", ""))
+                        .param("termo", "")
+                        .param("page", "0")
+                        .param("size", "12"))
                 .andExpect(status().isOk());
     }
 
@@ -107,7 +113,6 @@ class ObraControllerIT {
                         .param("titulo", "Obra com Tipo Forjado"))
                 .andExpect(status().isBadRequest());
     }
-
 
     @Test
     @DisplayName("Sucesso 3: Deve criar obra com título no limite máximo exato (20 caracteres)")
@@ -154,6 +159,9 @@ class ObraControllerIT {
             SecurityContextHolder.clearContext();
         }
 
+        // CORREÇÃO: Fornece uma URL falsa simulada para o DTO conseguir montar a resposta sem quebrar
+        when(storageService.upload(any())).thenReturn("https://cloudinary.com/mock.jpg");
+
         MockMultipartHttpServletRequestBuilder request = multipart("/obras/imagem");
         request.param("titulo", "Obra Teste");
 
@@ -163,15 +171,12 @@ class ObraControllerIT {
             request.file(arquivo);
         }
 
-
         mockMvc.perform(request)
                 .andExpect(status().is(statusEsperado));
     }
-
-
     // TESTES DE TRANSIÇÃO DE ESTADO (INTEGRAÇÃO)
     @Test
-    @DisplayName("Transição Válida 1: Deve transitar de Inexistente -> Cadastrada -> Removida")
+    @DisplayName("Transição Válida 1: Deve transitar de Inexistente -> Cadastrada -> Removida (Soft Delete)")
     void deveTransitarCicloDeVidaCompletoComSucesso() throws Exception {
 
         when(storageService.upload(any())).thenReturn("https://cloudinary.com/valida.jpg");
@@ -187,6 +192,10 @@ class ObraControllerIT {
 
         mockMvc.perform(delete("/obras/" + obraId))
                 .andExpect(status().isNoContent());
+
+        // VALIDAÇÃO: Garante que a obra não foi apagada fisicamente, apenas inativada (Soft Delete)
+        com.pessoal.galeria_ney.domain.Obra obraExcluida = repository.findById(UUID.fromString(obraId)).orElseThrow();
+        Assertions.assertFalse(obraExcluida.isAtivo(), "A obra deveria estar com a flag ativo=false em vez de ser apagada.");
     }
 
     @Test
@@ -207,11 +216,14 @@ class ObraControllerIT {
         autorVerdadeiro.setId(UUID.randomUUID());
         autorVerdadeiro.setRole(UserRole.USER);
 
+        // Preenche com os dados novos exigidos pelo banco (ativo e dataPostagem) para evitar crash de Constraint no H2
         com.pessoal.galeria_ney.domain.Obra obraAlheia = com.pessoal.galeria_ney.domain.Obra.builder()
                 .titulo("Obra de Terceiro")
                 .autor(autorVerdadeiro)
-                .tipo(com.pessoal.galeria_ney.domain.TipoObra.IMAGEM)
+                .tipo(TipoObra.IMAGEM)
                 .urlMidia("https://site.com/foto.jpg")
+                .ativo(true)
+                .dataPostagem(LocalDate.now())
                 .build();
 
         com.pessoal.galeria_ney.domain.Obra obraSalva = repository.save(obraAlheia);
@@ -226,25 +238,17 @@ class ObraControllerIT {
 
         MockMultipartFile arquivoMock = new MockMultipartFile("arquivo", "teste.jpg", "image/jpeg", "dados".getBytes());
 
-       when(storageService.upload(any())).thenThrow(new RuntimeException("Cloudinary fora do ar"));
+        when(storageService.upload(any())).thenThrow(new RuntimeException("Cloudinary fora do ar"));
 
         var requestBuilder = multipart("/obras/imagem")
                 .file(arquivoMock)
                 .param("titulo", "Obra Integrada");
 
-        // Validação do Fluxo
-        //MockMvc não tem o servidor Tomcat a rodar para transformar isto num status 500,
-        // ele vai atirar a ServletException. Vamos capturá-la e garantir que a causa foi a nossa falha!
-        Exception excecao = org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> {
+        Exception excecao = Assertions.assertThrows(Exception.class, () -> {
             mockMvc.perform(requestBuilder);
         });
 
-        // Verificamos se a causa raiz da quebra do fluxo foi efetivamente a falha no Cloudinary
-        org.junit.jupiter.api.Assertions.assertTrue(excecao.getCause() instanceof RuntimeException);
-        org.junit.jupiter.api.Assertions.assertEquals("Cloudinary fora do ar", excecao.getCause().getMessage());
+        Assertions.assertTrue(excecao.getCause() instanceof RuntimeException);
+        Assertions.assertEquals("Cloudinary fora do ar", excecao.getCause().getMessage());
     }
-
-
-
-
 }
