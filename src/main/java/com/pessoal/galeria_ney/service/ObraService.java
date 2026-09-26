@@ -8,11 +8,12 @@ import com.pessoal.galeria_ney.infra.exception.RegraDeNegocioException;
 import com.pessoal.galeria_ney.infra.utils.EmbedUrlResolver;
 import com.pessoal.galeria_ney.repository.ObraRepository;
 import com.pessoal.galeria_ney.service.storage.MidiaStorageService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -51,21 +52,22 @@ public class ObraService {
         }
     }
 
-    public List<Obra> listar(String termo){
+    public Page<Obra> listar(String termo, Pageable pageable) {
         if(termo == null || termo.isEmpty()){
-            return repository.findAll();
+            return repository.findByAtivoTrue(pageable);
         }
-        return repository.findByTituloContainingIgnoreCase(termo);
+        return repository.findByTituloContainingIgnoreCaseAndAtivoTrue(termo, pageable);
     }
 
-    public List<Obra> listarPorAutor(UUID autorId) {
-        return repository.findByAutorId(autorId);
+    public Page<Obra> listarPorAutor(UUID autorId, Pageable pageable) {
+        return repository.findByAutorIdAndAtivoTrue(autorId, pageable);
     }
 
     public Obra cadastrar(Obra obra) {
         validarDadosBasicos(obra);
         validarUrlMidia(obra);
         obra.setAutor(getUsuarioLogado());
+        obra.setAtivo(true);
         return repository.save(obra);
     }
 
@@ -82,12 +84,17 @@ public class ObraService {
         obra.setUrlMidia(urlImagem);
         obra.setTipo(TipoObra.IMAGEM);
         obra.setAutor(getUsuarioLogado());
+        obra.setAtivo(true);
 
         return repository.save(obra);
     }
 
     public Obra buscarPorId(UUID id) {
-        return repository.findById(id).orElseThrow(() -> new RegraDeNegocioException("id","Obra não encontrada"));
+        Obra obra = repository.findById(id).orElseThrow(() -> new RegraDeNegocioException("id","Obra não encontrada"));
+        if(!obra.isAtivo()) {
+            throw new RegraDeNegocioException("id", "Esta obra foi excluída e não está mais disponível.");
+        }
+        return obra;
     }
 
     public Obra atualizar(UUID id, Obra obraAlterada) {
@@ -109,7 +116,9 @@ public class ObraService {
     public void excluir(UUID id) {
         Obra obraEncontrada = buscarPorId(id);
         verificarPermissao(obraEncontrada);
-        repository.delete(obraEncontrada);
+
+        obraEncontrada.setAtivo(false);
+        repository.save(obraEncontrada);
     }
 
     public void validarUrlMidia(Obra obra) {
@@ -117,7 +126,6 @@ public class ObraService {
             if (obra.getUrlMidia() == null || obra.getUrlMidia().isBlank()) {
                 throw new RegraDeNegocioException("UrlMidia", "Para videos e Musicas é preciso colocar o link!");
             }
-            //EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo());
             String urlConvertida = EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo());
             obra.setUrlMidia(urlConvertida);
         }

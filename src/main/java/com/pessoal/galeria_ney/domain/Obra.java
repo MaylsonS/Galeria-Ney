@@ -1,8 +1,6 @@
 package com.pessoal.galeria_ney.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -13,7 +11,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Obra {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,6 +30,12 @@ public class Obra {
 
     private LocalDate dataPostagem;
 
+    private LocalDate dataAtualizacao;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean ativo = true;
+
     @ManyToOne
     @JoinColumn(name = "autor_id")
     private Usuario autor;
@@ -40,5 +43,10 @@ public class Obra {
     @PrePersist
     public void prePersist() {
         if(this.dataPostagem == null) this.dataPostagem = LocalDate.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.dataAtualizacao = LocalDate.now();
     }
 }
