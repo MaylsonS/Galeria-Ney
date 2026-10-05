@@ -46,6 +46,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity register(
             @RequestParam("login") String login,
             @RequestParam("senha") String senha,
@@ -70,6 +71,7 @@ public class AuthenticationController {
     }
 
     @PutMapping(value = "/usuarios/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity atualizarUsuario(
             @PathVariable java.util.UUID id,
             @RequestParam("login") String login,

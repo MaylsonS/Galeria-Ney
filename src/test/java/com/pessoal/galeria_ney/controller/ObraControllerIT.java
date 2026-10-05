@@ -30,6 +30,8 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -251,4 +253,39 @@ class ObraControllerIT {
         Assertions.assertTrue(excecao.getCause() instanceof RuntimeException);
         Assertions.assertEquals("Cloudinary fora do ar", excecao.getCause().getMessage());
     }
+
+    // hj
+
+    @Test
+    @DisplayName("Deve bloquear o acesso e retornar 403 ao tentar deletar sem Token JWT")
+    void deveDescobrirErroAcessoNaoAutenticado() throws Exception {
+        SecurityContextHolder.clearContext();
+
+        UUID idObra = UUID.randomUUID();
+
+        mockMvc.perform(delete("/obras/{id}", idObra))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 Bad Request ao tentar cadastrar Vídeo sem URL")
+    void deveDescobrirErroCadastroVideoSemUrl() throws Exception {
+
+        String jsonRequisicao = """
+            {
+                "titulo": "Gameplay Minecraft",
+                "tipo": "VIDEO_YOUTUBE",
+                "descricao": "Melhores momentos"
+            }
+        """;
+
+        mockMvc.perform(post("/obras")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content(jsonRequisicao))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].campo").value("UrlMidia"))
+                .andExpect(jsonPath("$[0].mensagem").value("Para videos e Musicas é preciso colocar o link!"));
+    }
+
+
 }
