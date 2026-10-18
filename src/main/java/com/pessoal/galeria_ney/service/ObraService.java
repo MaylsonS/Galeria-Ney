@@ -36,7 +36,7 @@ public class ObraService {
             throw new RegraDeNegocioException("titulo", "O titulo é obrigatorio");
         }
         if (obra.getTitulo().length() > 50) {
-            throw new RegraDeNegocioException("titulo", "O título deve ter no máximo 20 caracteres");
+            throw new RegraDeNegocioException("titulo", "O título deve ter no máximo 50 caracteres");
         }
     }
 

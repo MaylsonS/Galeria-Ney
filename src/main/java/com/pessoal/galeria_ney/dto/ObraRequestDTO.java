@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public record ObraRequestDTO(
         @NotBlank(message = "O titulo é obrigatorio")
-        @Size(max = 20, message = "O título deve ter no máximo 20 caracteres")
+        @Size(max = 50, message = "O título deve ter no máximo 50 caracteres")
         String titulo,
 
         String descricao,

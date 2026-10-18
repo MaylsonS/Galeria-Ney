@@ -18,7 +18,7 @@ public class Obra {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private String titulo;
 
     @Column(columnDefinition = "TEXT")

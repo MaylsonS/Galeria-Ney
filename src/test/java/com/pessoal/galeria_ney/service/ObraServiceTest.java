@@ -64,7 +64,6 @@ class ObraServiceTest {
         when(storageService.upload(arquivoFalso)).thenReturn("https://cloudinary.com/foto_falsa.jpg");
         when(repository.save(any(Obra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Correção: passando List.of(arquivoFalso) em vez do arquivo solto
         Obra obraSalva = obraService.cadastrarImagem(List.of(arquivoFalso), obraInicial);
 
         assertNotNull(obraSalva);
@@ -82,23 +81,22 @@ class ObraServiceTest {
         Obra obraInicial = Obra.builder().titulo("Teste").build();
 
         RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class, () -> {
-            // Correção: passando uma lista vazia
             obraService.cadastrarImagem(Collections.emptyList(), obraInicial);
         });
 
-        // Correção: mensagem atualizada para a nova regra da lista
         assertEquals("É obrigatório enviar pelo menos um arquivo de mídia.", ex.getMessage());
         verify(storageService, never()).upload(any());
         verify(repository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Deve cadastrar obra com titulo de exato 20 caracteres (Limite Superior Valido)")
+    @DisplayName("Deve cadastrar obra com titulo de exato 50 caracteres (Limite Superior Valido)")
     void cadastrarObraTituloLimiteSuperiorValido() {
-        String titulo20Caracteres = "A".repeat(20);
+        // Atualizado para 50 caracteres
+        String titulo50Caracteres = "A".repeat(50);
 
         Obra obraLimiteValido = Obra.builder()
-                .titulo(titulo20Caracteres)
+                .titulo(titulo50Caracteres)
                 .tipo(TipoObra.VIDEO_YOUTUBE)
                 .urlMidia("https://www.youtube.com/watch?v=123")
                 .build();
@@ -108,21 +106,23 @@ class ObraServiceTest {
         Obra obraSalva = obraService.cadastrar(obraLimiteValido);
 
         assertNotNull(obraSalva);
-        assertEquals(20, obraSalva.getTitulo().length());
-        assertEquals(titulo20Caracteres, obraSalva.getTitulo());
+        assertEquals(50, obraSalva.getTitulo().length());
+        assertEquals(titulo50Caracteres, obraSalva.getTitulo());
     }
 
     @Test
-    @DisplayName("Deve falhar ao cadastrar obra com titulo de 21 caracteres (Limite Superior Invalido)")
+    @DisplayName("Deve falhar ao cadastrar obra com titulo de 51 caracteres (Limite Superior Invalido)")
     void cadastrarObraTituloLimiteSuperiorInvalido() {
-        String titulo21Caracteres = "A".repeat(21);
-        Obra obraLimiteInvalido = Obra.builder().titulo(titulo21Caracteres).build();
+        // Atualizado para 51 caracteres
+        String titulo51Caracteres = "A".repeat(51);
+        Obra obraLimiteInvalido = Obra.builder().titulo(titulo51Caracteres).build();
 
         RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class, () -> {
             obraService.cadastrar(obraLimiteInvalido);
         });
 
-        assertEquals("O título deve ter no máximo 20 caracteres", ex.getMessage());
+        // Atualizada a mensagem esperada
+        assertEquals("O título deve ter no máximo 50 caracteres", ex.getMessage());
         verify(repository, never()).save(any());
     }
 
@@ -130,7 +130,6 @@ class ObraServiceTest {
     @DisplayName("Deve falhar ao cadastrar arquivo com tipo invalido (Ex: PDF)")
     void cadastrarImagemArquivoInvalido() {
         Obra obra = Obra.builder().titulo("Arte").build();
-        // Simulando o upload de um arquivo não permitido
         MockMultipartFile arquivoInvalido = new MockMultipartFile("arquivo", "documento.pdf", "application/pdf", new byte[10]);
 
         RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class, () -> {

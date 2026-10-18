@@ -57,7 +57,7 @@ class ObraControllerIT {
         Usuario usuarioMock = new Usuario();
         usuarioMock.setId(UUID.randomUUID());
         usuarioMock.setRole(UserRole.USER);
-        usuarioMock.setLogin("test@user.com"); // Previne NullPointer na autorização
+        usuarioMock.setLogin("test@user.com");
 
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(usuarioMock, null, usuarioMock.getAuthorities());
@@ -69,8 +69,9 @@ class ObraControllerIT {
     void deveRetornar201_Sucesso1_EnvioMultipartNoLimiteMinimo() throws Exception {
         when(storageService.upload(any())).thenReturn("https://cloudinary.com/mock.jpg");
 
+        // Alterado de "arquivo" para "arquivos"
         MockMultipartFile arquivo1Byte = new MockMultipartFile(
-                "arquivo", "teste.jpg", "image/jpeg", new byte[1]
+                "arquivos", "teste.jpg", "image/jpeg", new byte[1]
         );
 
         mockMvc.perform(multipart("/obras/imagem")
@@ -82,7 +83,6 @@ class ObraControllerIT {
     @Test
     @DisplayName("Sucesso 2: Deve retornar 200 OK acionando paginação quando termo for vazio")
     void deveRetornar200_Sucesso2_BuscaNoLimiteVazio() throws Exception {
-        // Agora simula o comportamento paginado
         mockMvc.perform(get("/obras")
                         .param("termo", "")
                         .param("page", "0")
@@ -93,8 +93,9 @@ class ObraControllerIT {
     @Test
     @DisplayName("Erro 1: Deve bloquear upload retornando 400 quando o arquivo enviado for vazio (0 bytes)")
     void deveRetornar400_Erro1_AusenciaDePayloadNoLimite() throws Exception {
+        // Alterado de "arquivo" para "arquivos"
         MockMultipartFile arquivoVazio = new MockMultipartFile(
-                "arquivo", "teste.jpg", "image/jpeg", new byte[0]
+                "arquivos", "teste.jpg", "image/jpeg", new byte[0]
         );
 
         mockMvc.perform(multipart("/obras/imagem")
@@ -106,8 +107,9 @@ class ObraControllerIT {
     @Test
     @DisplayName("Erro 2: Deve bloquear upload retornando 400 na ausência da barra requerida no Content-Type")
     void deveRetornar400_Erro2_LimiteDaRegraDeContentType() throws Exception {
+        // Alterado de "arquivo" para "arquivos"
         MockMultipartFile arquivoContentTypeInvalido = new MockMultipartFile(
-                "arquivo", "teste.jpg", "image", new byte[1]
+                "arquivos", "teste.jpg", "image", new byte[1]
         );
 
         mockMvc.perform(multipart("/obras/imagem")
@@ -117,30 +119,34 @@ class ObraControllerIT {
     }
 
     @Test
-    @DisplayName("Sucesso 3: Deve criar obra com título no limite máximo exato (20 caracteres)")
+    @DisplayName("Sucesso 3: Deve criar obra com título no limite máximo exato (50 caracteres)")
     void deveRetornar201_Sucesso3_TituloNoLimiteMaximo() throws Exception {
         when(storageService.upload(any())).thenReturn("https://cloudinary.com/mock.jpg");
 
+        // Alterado de "arquivo" para "arquivos"
         MockMultipartFile arquivoValido = new MockMultipartFile(
-                "arquivo", "teste.jpg", "image/jpeg", new byte[1]
+                "arquivos", "teste.jpg", "image/jpeg", new byte[1]
         );
 
-        String titulo20Chars = "A".repeat(20);
+        // Atualizado para 50 caracteres
+        String titulo50Chars = "A".repeat(50);
 
         mockMvc.perform(multipart("/obras/imagem")
                         .file(arquivoValido)
-                        .param("titulo", titulo20Chars))
+                        .param("titulo", titulo50Chars))
                 .andExpect(status().isCreated());
     }
 
     @Test
-    @DisplayName("Erro 3: Deve bloquear upload retornando 400 quando título excede o limite (21 caracteres)")
+    @DisplayName("Erro 3: Deve bloquear upload retornando 400 quando título excede o limite (51 caracteres)")
     void deveRetornar400_Erro3_TituloAcimaDoLimite() throws Exception {
+        // Alterado de "arquivo" para "arquivos"
         MockMultipartFile arquivoValido = new MockMultipartFile(
-                "arquivo", "teste.jpg", "image/jpeg", new byte[1]
+                "arquivos", "teste.jpg", "image/jpeg", new byte[1]
         );
 
-        String tituloInvalido = "A".repeat(21);
+        // Atualizado para 51 caracteres
+        String tituloInvalido = "A".repeat(51);
 
         mockMvc.perform(multipart("/obras/imagem")
                         .file(arquivoValido)
@@ -161,7 +167,6 @@ class ObraControllerIT {
             SecurityContextHolder.clearContext();
         }
 
-        // CORREÇÃO: Fornece uma URL falsa simulada para o DTO conseguir montar a resposta sem quebrar
         when(storageService.upload(any())).thenReturn("https://cloudinary.com/mock.jpg");
 
         MockMultipartHttpServletRequestBuilder request = multipart("/obras/imagem");
@@ -169,20 +174,23 @@ class ObraControllerIT {
 
         if (arquivoPresente) {
             String contentType = contentTypeImagem ? "image/jpeg" : "application/pdf";
-            MockMultipartFile arquivo = new MockMultipartFile("arquivo", "teste.jpg", contentType, "dados".getBytes());
+            // Alterado de "arquivo" para "arquivos"
+            MockMultipartFile arquivo = new MockMultipartFile("arquivos", "teste.jpg", contentType, "dados".getBytes());
             request.file(arquivo);
         }
 
         mockMvc.perform(request)
                 .andExpect(status().is(statusEsperado));
     }
+
     // TESTES DE TRANSIÇÃO DE ESTADO (INTEGRAÇÃO)
     @Test
     @DisplayName("Transição Válida 1: Deve transitar de Inexistente -> Cadastrada -> Removida (Soft Delete)")
     void deveTransitarCicloDeVidaCompletoComSucesso() throws Exception {
 
         when(storageService.upload(any())).thenReturn("https://cloudinary.com/valida.jpg");
-        MockMultipartFile arquivo = new MockMultipartFile("arquivo", "arte.jpg", "image/jpeg", new byte[1]);
+        // Alterado de "arquivo" para "arquivos"
+        MockMultipartFile arquivo = new MockMultipartFile("arquivos", "arte.jpg", "image/jpeg", new byte[1]);
 
         String responseJson = mockMvc.perform(multipart("/obras/imagem")
                         .file(arquivo)
@@ -195,7 +203,6 @@ class ObraControllerIT {
         mockMvc.perform(delete("/obras/" + obraId))
                 .andExpect(status().isNoContent());
 
-        // VALIDAÇÃO: Garante que a obra não foi apagada fisicamente, apenas inativada (Soft Delete)
         com.pessoal.galeria_ney.domain.Obra obraExcluida = repository.findById(UUID.fromString(obraId)).orElseThrow();
         Assertions.assertFalse(obraExcluida.isAtivo(), "A obra deveria estar com a flag ativo=false em vez de ser apagada.");
     }
@@ -218,7 +225,6 @@ class ObraControllerIT {
         autorVerdadeiro.setId(UUID.randomUUID());
         autorVerdadeiro.setRole(UserRole.USER);
 
-        // Preenche com os dados novos exigidos pelo banco (ativo e dataPostagem) para evitar crash de Constraint no H2
         com.pessoal.galeria_ney.domain.Obra obraAlheia = com.pessoal.galeria_ney.domain.Obra.builder()
                 .titulo("Obra de Terceiro")
                 .autor(autorVerdadeiro)
@@ -238,7 +244,8 @@ class ObraControllerIT {
     @DisplayName("Fluxograma de Integração: Deve interromper fluxo se o Cloudinary (Serviço Externo) falhar")
     void deveTratarFalhaNaIntegracaoExterna() throws Exception {
 
-        MockMultipartFile arquivoMock = new MockMultipartFile("arquivo", "teste.jpg", "image/jpeg", "dados".getBytes());
+        // Alterado de "arquivo" para "arquivos"
+        MockMultipartFile arquivoMock = new MockMultipartFile("arquivos", "teste.jpg", "image/jpeg", "dados".getBytes());
 
         when(storageService.upload(any())).thenThrow(new RuntimeException("Cloudinary fora do ar"));
 
@@ -253,8 +260,6 @@ class ObraControllerIT {
         Assertions.assertTrue(excecao.getCause() instanceof RuntimeException);
         Assertions.assertEquals("Cloudinary fora do ar", excecao.getCause().getMessage());
     }
-
-    // hj
 
     @Test
     @DisplayName("Deve bloquear o acesso e retornar 403 ao tentar deletar sem Token JWT")
@@ -286,6 +291,4 @@ class ObraControllerIT {
                 .andExpect(jsonPath("$[0].campo").value("UrlMidia"))
                 .andExpect(jsonPath("$[0].mensagem").value("Para videos e Musicas é preciso colocar o link!"));
     }
-
-
 }
