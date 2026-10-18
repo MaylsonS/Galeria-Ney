@@ -4,6 +4,7 @@ import com.pessoal.galeria_ney.domain.Obra;
 import com.pessoal.galeria_ney.domain.TipoObra;
 import com.pessoal.galeria_ney.dto.ObraRequestDTO;
 import com.pessoal.galeria_ney.dto.ObraResponseDTO;
+import com.pessoal.galeria_ney.repository.ObraRepository;
 import com.pessoal.galeria_ney.service.ObraService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -24,9 +25,11 @@ import java.util.UUID;
 public class ObraController {
 
     private final ObraService service;
+    private final ObraRepository repository;
 
-    public ObraController(ObraService service) {
+    public ObraController(ObraService service, ObraRepository repository) {
         this.service = service;
+        this.repository = repository;
     }
 
     @GetMapping
@@ -42,11 +45,22 @@ public class ObraController {
     @GetMapping("/autor/{autorId}")
     public ResponseEntity<Page<ObraResponseDTO>> listarPorAutor(
             @PathVariable UUID autorId,
+            @RequestParam(required = false) TipoObra tipo,  // Recebe IMAGEM, VIDEO_YOUTUBE...
+            @RequestParam(required = false) String termo,   // Recebe o texto da busca
             @PageableDefault(size = 12, sort = "dataPostagem", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Page<Obra> obras = service.listarPorAutor(autorId, pageable);
+        // Você precisará garantir que o seu ObraService e ObraRepository
+        // saibam lidar com esses parâmetros de filtro na query do banco de dados.
+        Page<Obra> obras = service.listarPorAutorFiltrado(autorId, tipo, termo, pageable);
         Page<ObraResponseDTO> resposta = obras.map(ObraResponseDTO::new);
         return ResponseEntity.ok(resposta);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ObraResponseDTO> buscarPorId(@PathVariable UUID id) {
+        return repository.findById(id)
+                .map(obra -> ResponseEntity.ok(new ObraResponseDTO(obra)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping

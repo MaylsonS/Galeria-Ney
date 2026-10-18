@@ -63,6 +63,24 @@ public class ObraService {
         return repository.findByAutorIdAndAtivoTrue(autorId, pageable);
     }
 
+    public Page<Obra> listarPorAutorFiltrado(UUID autorId, TipoObra tipo, String termo, Pageable pageable) {
+        boolean temTipo = tipo != null;
+        boolean temTermo = termo != null && !termo.trim().isEmpty();
+
+        // Remove espaços acidentais nas bordas do texto digitado
+        String termoLimpo = temTermo ? termo.trim() : null;
+
+        if (temTipo && temTermo) {
+            return repository.findByAutorIdAndTipoAndTituloContainingIgnoreCaseAndAtivoTrue(autorId, tipo, termoLimpo, pageable);
+        } else if (temTipo) {
+            return repository.findByAutorIdAndTipoAndAtivoTrue(autorId, tipo, pageable);
+        } else if (temTermo) {
+            return repository.findByAutorIdAndTituloContainingIgnoreCaseAndAtivoTrue(autorId, termoLimpo, pageable);
+        } else {
+            return repository.findByAutorIdAndAtivoTrue(autorId, pageable);
+        }
+    }
+
     public Obra cadastrar(Obra obra) {
         validarDadosBasicos(obra);
         validarUrlMidia(obra);
