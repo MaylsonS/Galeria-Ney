@@ -5,6 +5,7 @@ import com.pessoal.galeria_ney.domain.TipoObra;
 import com.pessoal.galeria_ney.infra.utils.EmbedUrlResolver;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public record ObraResponseDTO (
@@ -14,6 +15,7 @@ public record ObraResponseDTO (
         TipoObra tipo,
         String urlMidia,
         String urlEmbed,
+        List<String> midias,
         LocalDate dataPostagem,
         UUID autorId,
         String autorLogin
@@ -26,6 +28,7 @@ public record ObraResponseDTO (
                 obra.getTipo(),
                 obra.getUrlMidia(),
                 EmbedUrlResolver.getEmbedUrl(obra.getUrlMidia(), obra.getTipo()),
+                obra.getMidias(),
                 obra.getDataPostagem(),
                 obra.getAutor() != null ? obra.getAutor().getId() : null,
                 obra.getAutor() != null ? obra.getAutor().getLogin() : null

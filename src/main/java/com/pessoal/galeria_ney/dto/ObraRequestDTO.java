@@ -21,6 +21,8 @@ public record ObraRequestDTO(
 
         String urlMidia,
 
+        List<String> midias,
+
         List<UUID> coautoresIds
 
 ) {
@@ -30,6 +32,7 @@ public record ObraRequestDTO(
                 .descricao(this.descricao)
                 .tipo(this.tipo)
                 .urlMidia(this.urlMidia)
+                .midias(this.midias != null ? this.midias : new java.util.ArrayList<>())
                 .build();
     }
 }

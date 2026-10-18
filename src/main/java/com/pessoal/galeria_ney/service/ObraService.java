@@ -35,7 +35,7 @@ public class ObraService {
         if (obra.getTitulo() == null || obra.getTitulo().trim().isEmpty()) {
             throw new RegraDeNegocioException("titulo", "O titulo é obrigatorio");
         }
-        if (obra.getTitulo().length() > 20) {
+        if (obra.getTitulo().length() > 50) {
             throw new RegraDeNegocioException("titulo", "O título deve ter no máximo 20 caracteres");
         }
     }
@@ -89,17 +89,30 @@ public class ObraService {
         return repository.save(obra);
     }
 
-    public Obra cadastrarImagem(MultipartFile arquivo, Obra obra) {
-        if (arquivo == null || arquivo.isEmpty()) {
-            throw new RegraDeNegocioException("arquivo", "O arquivo da imagem é obrigatório.");
+    public Obra cadastrarImagem(java.util.List<MultipartFile> arquivos, Obra obra) {
+        if (arquivos == null || arquivos.isEmpty()) {
+            throw new RegraDeNegocioException("arquivos", "É obrigatório enviar pelo menos um arquivo de mídia.");
         }
-        if (arquivo.getContentType() == null || !arquivo.getContentType().startsWith("image/")) {
-            throw new RegraDeNegocioException("arquivo", "O arquivo enviado não é uma imagem válida.");
-        }
+
         validarDadosBasicos(obra);
 
-        String urlImagem = storageService.upload(arquivo);
-        obra.setUrlMidia(urlImagem);
+        java.util.List<String> urlsGeradas = new java.util.ArrayList<>();
+
+        for (MultipartFile arquivo : arquivos) {
+            if (arquivo.getContentType() == null || (!arquivo.getContentType().startsWith("image/") && !arquivo.getContentType().startsWith("video/"))) {
+                throw new RegraDeNegocioException("arquivos", "O arquivo enviado não é uma mídia válida.");
+            }
+            urlsGeradas.add(storageService.upload(arquivo));
+        }
+
+        obra.setUrlMidia(urlsGeradas.get(0));
+
+        // Se houverem mais arquivos, tira o primeiro e salva o restante na nova lista de mídias extras
+        if (urlsGeradas.size() > 1) {
+            urlsGeradas.remove(0);
+            obra.setMidias(urlsGeradas);
+        }
+
         obra.setTipo(TipoObra.IMAGEM);
         obra.setAutor(getUsuarioLogado());
         obra.setAtivo(true);

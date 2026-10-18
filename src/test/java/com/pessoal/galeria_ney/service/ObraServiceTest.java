@@ -19,6 +19,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,7 +64,8 @@ class ObraServiceTest {
         when(storageService.upload(arquivoFalso)).thenReturn("https://cloudinary.com/foto_falsa.jpg");
         when(repository.save(any(Obra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Obra obraSalva = obraService.cadastrarImagem(arquivoFalso, obraInicial);
+        // Correção: passando List.of(arquivoFalso) em vez do arquivo solto
+        Obra obraSalva = obraService.cadastrarImagem(List.of(arquivoFalso), obraInicial);
 
         assertNotNull(obraSalva);
         assertEquals(TipoObra.IMAGEM, obraSalva.getTipo());
@@ -77,17 +80,17 @@ class ObraServiceTest {
     @DisplayName("Deve lancar excecao ao tentar cadastrar imagem vazia")
     void cadastrarComImagemVazia() {
         Obra obraInicial = Obra.builder().titulo("Teste").build();
-        MockMultipartFile arquivoFalsoVazio = new MockMultipartFile("arquivo", new byte[0]);
 
-        assertThrows(RegraDeNegocioException.class, () -> {
-            obraService.cadastrarImagem(arquivoFalsoVazio, obraInicial);
+        RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class, () -> {
+            // Correção: passando uma lista vazia
+            obraService.cadastrarImagem(Collections.emptyList(), obraInicial);
         });
 
+        // Correção: mensagem atualizada para a nova regra da lista
+        assertEquals("É obrigatório enviar pelo menos um arquivo de mídia.", ex.getMessage());
         verify(storageService, never()).upload(any());
         verify(repository, never()).save(any());
     }
-
-    // Tecnica Valor limite
 
     @Test
     @DisplayName("Deve cadastrar obra com titulo de exato 20 caracteres (Limite Superior Valido)")
@@ -124,16 +127,17 @@ class ObraServiceTest {
     }
 
     @Test
-    @DisplayName("Deve falhar ao cadastrar imagem com arquivo de 0 bytes (Limite Inferior Arquivo)")
-    void cadastrarImagemArquivoLimiteInferiorInvalido() {
+    @DisplayName("Deve falhar ao cadastrar arquivo com tipo invalido (Ex: PDF)")
+    void cadastrarImagemArquivoInvalido() {
         Obra obra = Obra.builder().titulo("Arte").build();
-        MockMultipartFile arquivo0Bytes = new MockMultipartFile("arquivo", "arte.jpg", "image/jpeg", new byte[0]);
+        // Simulando o upload de um arquivo não permitido
+        MockMultipartFile arquivoInvalido = new MockMultipartFile("arquivo", "documento.pdf", "application/pdf", new byte[10]);
 
         RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class, () -> {
-            obraService.cadastrarImagem(arquivo0Bytes, obra);
+            obraService.cadastrarImagem(List.of(arquivoInvalido), obra);
         });
 
-        assertEquals("O arquivo da imagem é obrigatório.", ex.getMessage());
+        assertEquals("O arquivo enviado não é uma mídia válida.", ex.getMessage());
         verify(storageService, never()).upload(any());
     }
 
@@ -146,7 +150,7 @@ class ObraServiceTest {
         when(storageService.upload(arquivo1Byte)).thenReturn("https://cloudinary.com/1byte.jpg");
         when(repository.save(any(Obra.class))).thenAnswer(i -> i.getArgument(0));
 
-        Obra obraSalva = obraService.cadastrarImagem(arquivo1Byte, obra);
+        Obra obraSalva = obraService.cadastrarImagem(List.of(arquivo1Byte), obra);
 
         assertNotNull(obraSalva);
         assertEquals("https://cloudinary.com/1byte.jpg", obraSalva.getUrlMidia());
@@ -179,7 +183,6 @@ class ObraServiceTest {
         autorDaObra.setId(idDonoDaObra);
 
         UUID idObra = UUID.randomUUID();
-        // A obra necessita obrigatoriamente de estar ativa para passar no `buscarPorId` antes das regras de permissão
         Obra obra = Obra.builder()
                 .autor(autorDaObra)
                 .ativo(true)
@@ -193,7 +196,6 @@ class ObraServiceTest {
             });
             assertEquals("Acesso Negado: Você só pode editar ou excluir as suas próprias obras.", ex.getMessage());
 
-            // Garante que o estado ativo não foi modificado em caso de falha de permissão
             assertTrue(obra.isAtivo());
             verify(repository, never()).save(any());
         } else {
@@ -201,7 +203,6 @@ class ObraServiceTest {
                 obraService.excluir(idObra);
             });
 
-            // Garante o comportamento do "Soft Delete": O registo não é apagado fisicamente, apenas desativado.
             assertFalse(obra.isAtivo(), "A flag ativo deve ser alterada para false.");
             verify(repository, times(1)).save(obra);
         }

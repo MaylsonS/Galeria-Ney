@@ -75,7 +75,7 @@ public class ObraController {
     public ResponseEntity<ObraResponseDTO> salvarImagem(
             @RequestParam("titulo") String titulo,
             @RequestParam(value = "descricao", required = false) String descricao,
-            @RequestPart("arquivo") MultipartFile arquivo) {
+            @RequestPart("arquivos") java.util.List<MultipartFile> arquivos) { // ALTERADO PARA LISTA
 
         Obra obra = Obra.builder()
                 .titulo(titulo)
@@ -83,7 +83,7 @@ public class ObraController {
                 .tipo(TipoObra.IMAGEM)
                 .build();
 
-        Obra obraSalva = service.cadastrarImagem(arquivo, obra);
+        Obra obraSalva = service.cadastrarImagem(arquivos, obra);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ObraResponseDTO(obraSalva));
     }
 

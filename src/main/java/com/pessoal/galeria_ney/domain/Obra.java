@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity(name = "tb_obras")
@@ -27,6 +29,11 @@ public class Obra {
     private TipoObra tipo;
 
     private String urlMidia;
+
+    @ElementCollection
+    @CollectionTable(name = "obra_midias", joinColumns = @JoinColumn(name = "obra_id"))
+    @Column(name = "url")
+    private List<String> midias = new ArrayList<>();
 
     private LocalDate dataPostagem;
 
