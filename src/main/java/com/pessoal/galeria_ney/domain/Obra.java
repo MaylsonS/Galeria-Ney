@@ -62,11 +62,21 @@ public class Obra {
 //    public void adicionarTag(String tag) {}
 
 //    GREEN
+//    public void adicionarTag(String tag) {
+//        if (this.tags.size() == 3) {
+//            throw new RegraDeNegocioException("tag", "A obra já possui o limite máximo de 3 tags");
+//        }
+//        this.tags.add(tag);
+//    }
+
+//REFACTOR
+@Transient
+private static final int LIMITE_MAXIMO_TAGS = 3;
     public void adicionarTag(String tag) {
-        if (this.tags.size() == 3) {
-            throw new RegraDeNegocioException("tag", "A obra já possui o limite máximo de 3 tags");
+        if (this.tags.size() >= LIMITE_MAXIMO_TAGS) {
+            throw new RegraDeNegocioException("tag", "A obra já possui o limite máximo de " + LIMITE_MAXIMO_TAGS + " tags");
         }
-        this.tags.add(tag);
+        this.tags.add(tag.trim().toLowerCase());
     }
     @PrePersist
     public void prePersist() {
