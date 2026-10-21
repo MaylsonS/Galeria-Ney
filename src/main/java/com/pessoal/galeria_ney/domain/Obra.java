@@ -57,6 +57,8 @@ public class Obra {
     @JoinColumn(name = "autor_id")
     private Usuario autor;
 
+    public void adicionarTag(String tag) {}
+
     @PrePersist
     public void prePersist() {
         if(this.dataPostagem == null) this.dataPostagem = LocalDate.now();
