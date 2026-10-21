@@ -1,5 +1,6 @@
 package com.pessoal.galeria_ney.domain;
 
+import com.pessoal.galeria_ney.infra.exception.RegraDeNegocioException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -57,8 +58,16 @@ public class Obra {
     @JoinColumn(name = "autor_id")
     private Usuario autor;
 
-    public void adicionarTag(String tag) {}
+//    RED
+//    public void adicionarTag(String tag) {}
 
+//    GREEN
+    public void adicionarTag(String tag) {
+        if (this.tags.size() == 3) {
+            throw new RegraDeNegocioException("tag", "A obra já possui o limite máximo de 3 tags");
+        }
+        this.tags.add(tag);
+    }
     @PrePersist
     public void prePersist() {
         if(this.dataPostagem == null) this.dataPostagem = LocalDate.now();
