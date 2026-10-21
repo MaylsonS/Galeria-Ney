@@ -16,15 +16,32 @@ public class InteracaoService {
         this.obraRepository = obraRepository;
     }
 
-    public void curtirObra(UUID obraId, UUID usuarioId) {
-        Obra obra = obraRepository.findById(obraId)
-                .orElseThrow(() -> new RegraDeNegocioException("id", "Obra não encontrada"));
+//    RED
+    public void curtirObra(UUID obraId, UUID usuarioId) {}
 
-        if (obra.getCurtidas().contains(usuarioId)) {
-            throw new RegraDeNegocioException("curtida", "Você já curtiu esta obra");
-        }
+//    GREEN
+//    public void curtirObra(UUID obraId, UUID usuarioId) {
+//        Obra obra = obraRepository.findById(obraId).get();
+//
+//        // Código sujo, mas que faz o teste passar
+//        if (obra.getCurtidas().contains(usuarioId)) {
+//            throw new RegraDeNegocioException("curtida", "Você já curtiu esta obra");
+//        }
+//
+//        obra.getCurtidas().add(usuarioId);
+//        obraRepository.save(obra);
+//    }
 
-        obra.getCurtidas().add(usuarioId);
-        obraRepository.save(obra);
-    }
+//    REFACTOR
+//    public void curtirObra(UUID obraId, UUID usuarioId) {
+//        Obra obra = obraRepository.findById(obraId)
+//                .orElseThrow(() -> new RegraDeNegocioException("id", "Obra não encontrada"));
+//
+//        if (obra.getCurtidas().contains(usuarioId)) {
+//            throw new RegraDeNegocioException("curtida", "Você já curtiu esta obra");
+//        }
+//
+//        obra.getCurtidas().add(usuarioId);
+//        obraRepository.save(obra);
+//    }
 }
