@@ -17,9 +17,9 @@ public class InteracaoService {
     }
 
     public void curtirObra(UUID obraId, UUID usuarioId) {
-        Obra obra = obraRepository.findById(obraId).get();
+        Obra obra = obraRepository.findById(obraId)
+                .orElseThrow(() -> new RegraDeNegocioException("id", "Obra não encontrada"));
 
-        // Código sujo, mas que faz o teste passar
         if (obra.getCurtidas().contains(usuarioId)) {
             throw new RegraDeNegocioException("curtida", "Você já curtiu esta obra");
         }
